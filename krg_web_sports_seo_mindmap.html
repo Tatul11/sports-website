@@ -1,0 +1,584 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+  :root {
+    --green-dark: #1a6b3a;
+    --green-mid: #2e8b57;
+    --green-light: #d5f5e3;
+    --blue: #1a5276;
+    --blue-light: #d6eaf8;
+    --orange: #d35400;
+    --orange-light: #fdebd0;
+    --red: #c0392b;
+    --red-light: #fadbd8;
+    --gray: #ecf0f1;
+    --text: #2c3e50;
+    --white: #fff;
+    --font: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: var(--font); background: transparent; color: var(--text); }
+
+  .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0,0,0,0); }
+
+  .container { padding: 12px 16px 20px; }
+
+  /* Tab bar */
+  .tabs { display: flex; gap: 4px; margin-bottom: 14px; flex-wrap: wrap; }
+  .tab { padding: 6px 14px; border-radius: 20px; border: 2px solid transparent;
+         cursor: pointer; font-size: 12px; font-weight: 600; transition: all .15s; }
+  .tab.active { background: var(--green-dark); color: var(--white); border-color: var(--green-dark); }
+  .tab:not(.active) { background: var(--white); color: var(--green-dark); border-color: var(--green-dark); }
+  .tab:hover:not(.active) { background: var(--green-light); }
+
+  /* Panel */
+  .panel { display: none; }
+  .panel.active { display: block; }
+
+  /* Mind map grid */
+  .mind-map { display: flex; flex-direction: column; gap: 10px; }
+
+  .root-node {
+    background: var(--green-dark); color: var(--white);
+    border-radius: 10px; padding: 12px 18px;
+    display: flex; align-items: center; gap: 12px;
+    font-weight: 700; font-size: 15px;
+    box-shadow: 0 2px 8px rgba(26,107,58,.25);
+  }
+  .root-icon { font-size: 22px; }
+
+  .tier-row { display: flex; gap: 8px; flex-wrap: wrap; }
+
+  .node {
+    border-radius: 8px; padding: 8px 10px; cursor: pointer;
+    flex: 1; min-width: 110px; max-width: 200px;
+    transition: transform .12s, box-shadow .12s;
+    border: 2px solid transparent;
+    position: relative;
+  }
+  .node:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,.12); }
+  .node.selected { border-color: var(--green-dark); box-shadow: 0 0 0 3px rgba(26,107,58,.2); }
+
+  .node-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .4px; margin-bottom: 3px; }
+  .node-url { font-size: 10px; font-family: monospace; color: var(--green-dark); font-weight: 600; }
+  .node-sub { font-size: 9.5px; color: #666; margin-top: 3px; }
+  .node-badge { position: absolute; top: 6px; right: 6px; font-size: 8px; font-weight: 700;
+                background: var(--green-dark); color: var(--white); border-radius: 4px; padding: 1px 4px; }
+
+  /* Colors by type */
+  .t-pillar  { background: var(--green-light); }
+  .t-sub     { background: var(--blue-light); }
+  .t-entity  { background: var(--orange-light); }
+  .t-data    { background: #fef9e7; }
+  .t-static  { background: var(--gray); }
+  .t-gap     { background: var(--red-light); border: 1.5px dashed var(--red); }
+  .t-tech    { background: #f0f0f0; }
+
+  .section-label {
+    font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .6px;
+    color: #888; margin-top: 4px; margin-bottom: 4px; padding-left: 2px;
+  }
+
+  /* Detail drawer */
+  .detail {
+    background: var(--white); border: 2px solid var(--green-dark);
+    border-radius: 10px; padding: 14px 16px; margin-top: 10px;
+    animation: fadeIn .15s ease;
+  }
+  @keyframes fadeIn { from { opacity:0; transform: translateY(4px); } to { opacity:1; transform: none; } }
+  .detail h3 { font-size: 13px; color: var(--green-dark); margin-bottom: 8px; }
+  .detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .detail-item { font-size: 10.5px; }
+  .detail-item strong { display: block; font-size: 9px; text-transform: uppercase; color: #888; margin-bottom: 1px; }
+  .detail-url { font-family: monospace; font-size: 10px; background: #f5f5f5;
+                padding: 4px 8px; border-radius: 4px; margin-bottom: 8px; color: var(--green-dark); font-weight: 600; }
+  .tag { display: inline-block; padding: 2px 7px; border-radius: 10px; font-size: 9px; font-weight: 700;
+         margin: 2px; background: var(--green-light); color: var(--green-dark); }
+  .tag.gap { background: var(--red-light); color: var(--red); }
+  .tag.tech { background: #e8e8e8; color: #444; }
+
+  /* Scores panel */
+  .score-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .score-card { border-radius: 8px; padding: 10px; text-align: center; }
+  .score-num { font-size: 22px; font-weight: 800; }
+  .score-label { font-size: 9.5px; font-weight: 600; color: #555; margin-top: 2px; line-height: 1.3; }
+  .score-high  { background: var(--green-light); color: var(--green-dark); }
+  .score-mid   { background: var(--orange-light); color: var(--orange); }
+  .score-low   { background: var(--red-light); color: var(--red); }
+  .score-avg   { background: var(--green-dark); color: var(--white); grid-column: 1 / -1; }
+
+  /* Architecture panel */
+  .arch-tree { display: flex; flex-direction: column; gap: 6px; }
+  .arch-tier { display: flex; align-items: flex-start; gap: 8px; padding: 8px 10px; border-radius: 8px; }
+  .arch-tier-0 { background: var(--green-dark); color: var(--white); }
+  .arch-tier-1 { background: var(--green-light); }
+  .arch-tier-2 { background: var(--blue-light); padding-left: 24px; }
+  .arch-tier-3 { background: var(--orange-light); padding-left: 40px; }
+  .arch-tier-s { background: var(--gray); }
+  .arch-tier-l { background: var(--blue-light); }
+  .arch-url { font-family: monospace; font-size: 10px; font-weight: 700; flex: 0 0 auto; min-width: 160px; }
+  .arch-desc { font-size: 10px; color: #555; }
+  .arch-tier-0 .arch-url, .arch-tier-0 .arch-desc { color: rgba(255,255,255,.9); }
+  .arch-indent { color: #aaa; margin-right: 2px; }
+
+  /* Legend */
+  .legend { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 10px; }
+  .legend-item { display: flex; align-items: center; gap: 4px; font-size: 9.5px; font-weight: 600; }
+  .legend-dot { width: 10px; height: 10px; border-radius: 3px; flex-shrink: 0; }
+</style>
+</head>
+<body>
+<h2 class="sr-only">KRG Web Sports SEO Architecture — interactive mind map, E-E-A-T scores, and optimized site structure based on qalampir.uz analysis</h2>
+
+<div class="container">
+
+  <div class="tabs">
+    <div class="tab active" onclick="showTab('mindmap')">🗺 Mind Map</div>
+    <div class="tab" onclick="showTab('scores')">📊 E-E-A-T Scores</div>
+    <div class="tab" onclick="showTab('architecture')">🏗 KRG Architecture</div>
+    <div class="tab" onclick="showTab('gaps')">⚠️ Gaps & Fixes</div>
+  </div>
+
+  <!-- MIND MAP TAB -->
+  <div id="tab-mindmap" class="panel active">
+    <div class="legend">
+      <div class="legend-item"><div class="legend-dot" style="background:#d5f5e3"></div>Sport Pillar (Tier 1)</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#d6eaf8"></div>Sub-Category (Tier 2)</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#fdebd0"></div>Entity Page</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#fef9e7"></div>Data / Scores</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#fadbd8;border:1.5px dashed #c0392b"></div>Gap (Missing)</div>
+    </div>
+
+    <div class="mind-map">
+      <div class="root-node">
+        <span class="root-icon">⚽</span>
+        <div>
+          <div>KRG WEB SPORTS</div>
+          <div style="font-size:10px;font-weight:400;opacity:.85">yourdomain.uz — Sports News Portal for Uzbek Audience</div>
+        </div>
+      </div>
+
+      <div class="section-label">Tier 1 — Sport Pillars</div>
+      <div class="tier-row">
+        <div class="node t-pillar selected" onclick="showDetail('football')">
+          <div class="node-badge">BIGGEST</div>
+          <div class="node-label">⚽ Football</div>
+          <div class="node-url">/futbol/</div>
+          <div class="node-sub">UPL, Milliy Jamoa, UCL, EPL, transfers</div>
+        </div>
+        <div class="node t-pillar" onclick="showDetail('basketball')">
+          <div class="node-label">🏀 Basketball</div>
+          <div class="node-url">/basketbol/</div>
+          <div class="node-sub">NBA, EuroLeague, Uzbek team</div>
+        </div>
+        <div class="node t-pillar" onclick="showDetail('tennis')">
+          <div class="node-label">🎾 Tennis</div>
+          <div class="node-url">/tennis/</div>
+          <div class="node-sub">ATP, WTA, Rakhimova hub</div>
+        </div>
+        <div class="node t-pillar" onclick="showDetail('boxing')">
+          <div class="node-label">🥊 Boxing/MMA</div>
+          <div class="node-url">/boks-mma/</div>
+          <div class="node-sub">Local + world champions</div>
+        </div>
+        <div class="node t-pillar" onclick="showDetail('athletics')">
+          <div class="node-label">🏃 Athletics</div>
+          <div class="node-url">/atletika-olimpiya/</div>
+          <div class="node-sub">Olympics, track &amp; field</div>
+        </div>
+      </div>
+
+      <div class="section-label">Tier 2 — Football Sub-Categories (click Football above to expand)</div>
+      <div class="tier-row" id="football-subs">
+        <div class="node t-sub" onclick="showDetail('upl')">
+          <div class="node-label">🇺🇿 UPL</div>
+          <div class="node-url">/futbol/uzbekiston-premier-ligasi/</div>
+          <div class="node-sub">League table, results, news</div>
+        </div>
+        <div class="node t-sub" onclick="showDetail('milliy')">
+          <div class="node-label">🏟 National Team</div>
+          <div class="node-url">/futbol/milliy-jamoa/</div>
+          <div class="node-sub">Uzbekistan squad, matches, news</div>
+        </div>
+        <div class="node t-sub" onclick="showDetail('ucl')">
+          <div class="node-label">⭐ UCL</div>
+          <div class="node-url">/futbol/champions-league/</div>
+          <div class="node-sub">Champions League hub</div>
+        </div>
+        <div class="node t-sub" onclick="showDetail('worldcup')">
+          <div class="node-badge" style="background:#d35400">2026</div>
+          <div class="node-label">🌍 World Cup</div>
+          <div class="node-url">/futbol/jahon-kubogi/</div>
+          <div class="node-sub">FIFA 2026 — major opportunity</div>
+        </div>
+        <div class="node t-sub" onclick="showDetail('abroad')">
+          <div class="node-label">✈ Uzbeks Abroad</div>
+          <div class="node-url">/futbol/uzb-futbolchilar-chetda/</div>
+          <div class="node-sub">Husanov, all UZB players</div>
+        </div>
+        <div class="node t-sub" onclick="showDetail('transfer')">
+          <div class="node-label">💸 Transfers</div>
+          <div class="node-url">/futbol/transfer/</div>
+          <div class="node-sub">Transfer window news</div>
+        </div>
+      </div>
+
+      <div class="section-label">Entity Pages — Hub & Spoke SEO</div>
+      <div class="tier-row">
+        <div class="node t-entity" onclick="showDetail('player-entity')">
+          <div class="node-label">👤 Player Profiles</div>
+          <div class="node-url">/futbolchi/[slug]/</div>
+          <div class="node-sub">Bio, stats, career, news feed, FAQ schema</div>
+        </div>
+        <div class="node t-entity" onclick="showDetail('club-entity')">
+          <div class="node-label">🏟 Club Pages</div>
+          <div class="node-url">/jamoa/[slug]/</div>
+          <div class="node-sub">Squad, results, news, SportsOrganization schema</div>
+        </div>
+        <div class="node t-entity" onclick="showDetail('comp-entity')">
+          <div class="node-label">🏆 Competition Hubs</div>
+          <div class="node-url">/musobaqa/[slug]/</div>
+          <div class="node-sub">Table, results, top scorers, news</div>
+        </div>
+        <div class="node t-entity" onclick="showDetail('author-entity')">
+          <div class="node-label">✍ Author Pages</div>
+          <div class="node-url">/muallif/[slug]/</div>
+          <div class="node-sub">Credentials, articles — E-E-A-T signal</div>
+        </div>
+      </div>
+
+      <div class="section-label">Data & Special Sections</div>
+      <div class="tier-row">
+        <div class="node t-data" onclick="showDetail('scores')">
+          <div class="node-label">📡 Live Scores</div>
+          <div class="node-url">/natijalar/</div>
+          <div class="node-sub">Real-time scores — daily habit</div>
+        </div>
+        <div class="node t-data" onclick="showDetail('tables')">
+          <div class="node-label">📋 Tables</div>
+          <div class="node-url">/jadvallar/</div>
+          <div class="node-sub">League standings per comp</div>
+        </div>
+        <div class="node t-data" onclick="showDetail('video')">
+          <div class="node-label">🎥 Video</div>
+          <div class="node-url">/video/</div>
+          <div class="node-sub">Highlights, interviews</div>
+        </div>
+        <div class="node t-data" onclick="showDetail('analiz')">
+          <div class="node-label">🔬 Analysis</div>
+          <div class="node-url">/analiz/</div>
+          <div class="node-sub">Deep dives — HCU differentiator</div>
+        </div>
+        <div class="node t-data" onclick="showDetail('intervyu')">
+          <div class="node-label">🎙 Interviews</div>
+          <div class="node-url">/intervyu/</div>
+          <div class="node-sub">Exclusive Q&amp;As — E-E-A-T</div>
+        </div>
+      </div>
+
+      <div id="node-detail" class="detail" style="display:none"></div>
+    </div>
+  </div>
+
+  <!-- E-E-A-T SCORES TAB -->
+  <div id="tab-scores" class="panel">
+    <p style="font-size:10.5px;color:#666;margin-bottom:12px">Full 12-criterion E-E-A-T / HCU analysis of <strong>qalampir.uz</strong> — baseline for KRG Web Sports.</p>
+    <div class="score-grid">
+      <div class="score-card score-high"><div class="score-num">8</div><div class="score-label">Authorship & Expertise<br>(isAuthor)</div></div>
+      <div class="score-card score-mid"><div class="score-num">6</div><div class="score-label">Topical Authority<br>(siteFocusScore)</div></div>
+      <div class="score-card score-high"><div class="score-num">8</div><div class="score-label">Technical Health<br>& Maintenance</div></div>
+      <div class="score-card score-mid"><div class="score-num">6</div><div class="score-label">Content Effort<br>(contentEffort)</div></div>
+      <div class="score-card score-low"><div class="score-num">5</div><div class="score-label">Original Content<br>(OriginalContentScore)</div></div>
+      <div class="score-card score-low"><div class="score-num">4</div><div class="score-label">Citation Quality<br>& Substantiation</div></div>
+      <div class="score-card score-high"><div class="score-num">9</div><div class="score-label">Content Freshness<br>& Timeliness</div></div>
+      <div class="score-card score-high"><div class="score-num">7</div><div class="score-label">Page Intent<br>(commercialScore)</div></div>
+      <div class="score-card score-high"><div class="score-num">7</div><div class="score-label">Structural Quality<br>& Readability</div></div>
+      <div class="score-card score-high"><div class="score-num">8</div><div class="score-label">Mobile<br>Usability</div></div>
+      <div class="score-card score-mid"><div class="score-num">6</div><div class="score-label">Content-Type<br>Alignment</div></div>
+      <div class="score-card score-high"><div class="score-num">7</div><div class="score-label">Trust & Negative<br>Signals</div></div>
+      <div class="score-card score-avg"><div class="score-num">6.75 / 10</div><div class="score-label">FINAL PQ SCORE — Strong brand + freshness, offset by thin citation & originality</div></div>
+    </div>
+    <div style="margin-top:14px;padding:10px;background:#fef9e7;border-radius:8px;font-size:10px;line-height:1.6">
+      <strong style="color:#d35400">HCU Verdict:</strong> MIXED — "helpful-first" at the domain level (licensed media, named staff, 11+ years), but individual articles skew "search-first" (short-form, no primary citations, thin originality). KRG Web Sports must fix Citation Quality (4/10) and Original Content (5/10) as priority #1.
+    </div>
+  </div>
+
+  <!-- ARCHITECTURE TAB -->
+  <div id="tab-architecture" class="panel">
+    <p style="font-size:10.5px;color:#666;margin-bottom:10px">Optimized URL architecture for <strong>KRG Web Sports</strong> — 4 language versions, entity-based SEO, hub & spoke structure.</p>
+    <div class="arch-tree">
+      <div class="arch-tier arch-tier-0"><span class="arch-url">/</span><span class="arch-desc">Homepage — Breaking news, top stories per sport, live scores widget</span></div>
+
+      <div class="arch-tier arch-tier-1"><span class="arch-url">/futbol/</span><span class="arch-desc">Football pillar — highest traffic</span></div>
+      <div class="arch-tier arch-tier-2"><span class="arch-url">/futbol/uzbekiston-premier-ligasi/</span><span class="arch-desc">UPL hub: table, results, news</span></div>
+      <div class="arch-tier arch-tier-2"><span class="arch-url">/futbol/milliy-jamoa/</span><span class="arch-desc">National team hub: squad, matches, news</span></div>
+      <div class="arch-tier arch-tier-2"><span class="arch-url">/futbol/champions-league/</span><span class="arch-desc">UCL hub</span></div>
+      <div class="arch-tier arch-tier-2"><span class="arch-url">/futbol/jahon-kubogi/</span><span class="arch-desc">FIFA 2026 World Cup — major opportunity</span></div>
+      <div class="arch-tier arch-tier-2"><span class="arch-url">/futbol/uzb-futbolchilar-chetda/</span><span class="arch-desc">Uzbek players abroad — Husanov focus</span></div>
+      <div class="arch-tier arch-tier-2"><span class="arch-url">/futbol/angliya-premier-ligasi/</span><span class="arch-desc">EPL hub</span></div>
+      <div class="arch-tier arch-tier-2"><span class="arch-url">/futbol/transfer/</span><span class="arch-desc">Transfer news hub</span></div>
+      <div class="arch-tier arch-tier-3"><span class="arch-url">/futbolchi/abdukodir-husanov/</span><span class="arch-desc">Player entity: bio, stats, career, news feed, FAQ schema</span></div>
+      <div class="arch-tier arch-tier-3"><span class="arch-url">/jamoa/manchester-city/</span><span class="arch-desc">Club entity: squad, results, news, SportsOrganization schema</span></div>
+      <div class="arch-tier arch-tier-3"><span class="arch-url">/musobaqa/england-premier-league-2025-26/</span><span class="arch-desc">Competition entity: table, scorers, matches</span></div>
+
+      <div class="arch-tier arch-tier-1"><span class="arch-url">/basketbol/</span><span class="arch-desc">Basketball — NBA, EuroLeague, Uzbek team</span></div>
+      <div class="arch-tier arch-tier-2"><span class="arch-url">/basketbol/nba/</span><span class="arch-desc">NBA hub</span></div>
+      <div class="arch-tier arch-tier-2"><span class="arch-url">/basketbol/milliy-jamoa/</span><span class="arch-desc">Uzbek basketball team</span></div>
+
+      <div class="arch-tier arch-tier-1"><span class="arch-url">/tennis/</span><span class="arch-desc">Tennis — ATP, WTA, Grand Slams</span></div>
+      <div class="arch-tier arch-tier-2"><span class="arch-url">/tennis/uzbek-tennischilar/</span><span class="arch-desc">Uzbek tennis players — Rakhimova hub</span></div>
+      <div class="arch-tier arch-tier-2"><span class="arch-url">/tennis/grand-slam/</span><span class="arch-desc">Roland Garros, Wimbledon, US Open, AO</span></div>
+
+      <div class="arch-tier arch-tier-1"><span class="arch-url">/boks-mma/</span><span class="arch-desc">Boxing & MMA</span></div>
+      <div class="arch-tier arch-tier-1"><span class="arch-url">/atletika-olimpiya/</span><span class="arch-desc">Athletics & Olympics</span></div>
+
+      <div class="arch-tier arch-tier-s"><span class="arch-url">/natijalar/</span><span class="arch-desc">Live scores & results — daily recurring traffic</span></div>
+      <div class="arch-tier arch-tier-s"><span class="arch-url">/jadvallar/</span><span class="arch-desc">League standings per competition</span></div>
+      <div class="arch-tier arch-tier-s"><span class="arch-url">/video/</span><span class="arch-desc">Video hub — highlights, interviews</span></div>
+      <div class="arch-tier arch-tier-s"><span class="arch-url">/analiz/</span><span class="arch-desc">Deep analysis — HCU differentiator content</span></div>
+      <div class="arch-tier arch-tier-s"><span class="arch-url">/intervyu/</span><span class="arch-desc">Exclusive interviews — E-E-A-T authority</span></div>
+      <div class="arch-tier arch-tier-s"><span class="arch-url">/mualliflar/</span><span class="arch-desc">Authors directory + /muallif/[name]/ profiles with credentials</span></div>
+      <div class="arch-tier arch-tier-s"><span class="arch-url">/haqida/ &nbsp;/aloqa/ &nbsp;/maxfiylik/</span><span class="arch-desc">Trust pages — About, Contact, Privacy</span></div>
+
+      <div class="arch-tier arch-tier-l"><span class="arch-url">/oz/ &nbsp;/uz/ &nbsp;/ru/ &nbsp;/en/</span><span class="arch-desc">4 language versions with full hreflang — Russian (/ru/) is a key advantage vs qalampir.uz</span></div>
+    </div>
+  </div>
+
+  <!-- GAPS TAB -->
+  <div id="tab-gaps" class="panel">
+    <p style="font-size:10.5px;color:#666;margin-bottom:10px">Critical gaps in <strong>qalampir.uz</strong> that KRG Web Sports must fix from day one.</p>
+    <div style="display:flex;flex-direction:column;gap:8px">
+      <div style="background:#fadbd8;border-left:4px solid #c0392b;border-radius:6px;padding:10px 12px">
+        <div style="font-size:11px;font-weight:700;color:#c0392b;margin-bottom:4px">🔴 CRITICAL: Citation Quality (4/10)</div>
+        <div style="font-size:10px;line-height:1.6">Articles reference sources by name but <strong>never hyperlink</strong> to them. Fix: Add mandatory "Manba:" (Source) section at article end with clickable link to press release, official site, or primary report. This is qalampir.uz's biggest HCU vulnerability.</div>
+      </div>
+      <div style="background:#fadbd8;border-left:4px solid #c0392b;border-radius:6px;padding:10px 12px">
+        <div style="font-size:11px;font-weight:700;color:#c0392b;margin-bottom:4px">🔴 CRITICAL: Schema.org Structured Data (MISSING)</div>
+        <div style="font-size:10px;line-height:1.6">Zero schema markup found on qalampir.uz. KRG Web Sports must implement: <strong>NewsArticle</strong> on all articles → <strong>SportsEvent</strong> on match pages → <strong>Person</strong> on author + player profiles → <strong>SportsOrganization</strong> on club pages → <strong>FAQPage</strong> on entity pages → <strong>BreadcrumbList</strong> everywhere. Unlocks rich results & Google News eligibility.</div>
+      </div>
+      <div style="background:#fdebd0;border-left:4px solid #d35400;border-radius:6px;padding:10px 12px">
+        <div style="font-size:11px;font-weight:700;color:#d35400;margin-bottom:4px">🟠 HIGH: Original Content (5/10)</div>
+        <div style="font-size:10px;line-height:1.6">Most articles repackage external wire stories. Fix: Publish 2 deep-analysis pieces per week per sport. Include proprietary angles: Uzbek player stats, local federation data, exclusive quotes. This is the single biggest differentiation from qalampir.uz.</div>
+      </div>
+      <div style="background:#fdebd0;border-left:4px solid #d35400;border-radius:6px;padding:10px 12px">
+        <div style="font-size:11px;font-weight:700;color:#d35400;margin-bottom:4px">🟠 HIGH: Entity Pages (MISSING)</div>
+        <div style="font-size:10px;line-height:1.6">qalampir.uz has no player, club, or competition entity pages. KRG Web Sports must build: <strong>/futbolchi/abdukodir-husanov/</strong> with full bio, stats, career, news feed, FAQ schema. These pages attract evergreen long-tail queries and compound over time.</div>
+      </div>
+      <div style="background:#fdebd0;border-left:4px solid #d35400;border-radius:6px;padding:10px 12px">
+        <div style="font-size:11px;font-weight:700;color:#d35400;margin-bottom:4px">🟠 HIGH: Topical Authority (6/10 — multi-niche dilution)</div>
+        <div style="font-size:10px;line-height:1.6">qalampir.uz spreads authority across 7+ niches. KRG Web Sports = sports only → instant topical focus advantage. Build sport pillar pages as hubs with all sub-topics internally linked in a hierarchy. Google rewards deep expertise in a defined domain.</div>
+      </div>
+      <div style="background:#d5f5e3;border-left:4px solid #1a6b3a;border-radius:6px;padding:10px 12px">
+        <div style="font-size:11px;font-weight:700;color:#1a6b3a;margin-bottom:4px">🟢 ADVANTAGE: Russian Language Version</div>
+        <div style="font-size:10px;line-height:1.6">qalampir.uz offers Cyrillic Uzbek, Latin Uzbek, and English — but NO Russian. Adding <strong>/ru/</strong> captures the large Russian-speaking Uzbek sports audience. This is an untapped channel for KRG Web Sports.</div>
+      </div>
+      <div style="background:#d5f5e3;border-left:4px solid #1a6b3a;border-radius:6px;padding:10px 12px">
+        <div style="font-size:11px;font-weight:700;color:#1a6b3a;margin-bottom:4px">🟢 ADVANTAGE: Live Scores + Statistics Sections</div>
+        <div style="font-size:10px;line-height:1.6">qalampir.uz has no live scores or statistics hub. <strong>/natijalar/</strong> and <strong>/jadvallar/</strong> create daily return-visit habits and target high-frequency queries like "Champions League natijalar bugun" — queries qalampir.uz cannot satisfy.</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+function showTab(name) {
+  document.querySelectorAll('.tab').forEach((t,i) => {
+    t.classList.toggle('active', ['mindmap','scores','architecture','gaps'][i] === name);
+  });
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.getElementById('tab-' + name).classList.add('active');
+}
+
+const details = {
+  football: {
+    title: '⚽ Football — /futbol/',
+    url: '/futbol/',
+    desc: 'Primary traffic pillar. Covers Uzbekistan Premier League, Uzbek national team, Champions League, Europa League, EPL, La Liga, Bundesliga, transfer news, and all Uzbek players abroad.',
+    schema: ['NewsArticle', 'SportsEvent', 'SportsOrganization', 'BreadcrumbList'],
+    content: 'Breaking news, match previews, match reports, player profiles, transfers, tactical analysis',
+    priority: 'HIGHEST — launch with 20+ articles minimum'
+  },
+  basketball: {
+    title: '🏀 Basketball — /basketbol/',
+    url: '/basketbol/',
+    desc: 'NBA, EuroLeague, and Uzbekistan national team. Covers local leagues and international competitions.',
+    schema: ['NewsArticle', 'SportsEvent'],
+    content: 'Match reports, standings, player news, national team updates',
+    priority: 'HIGH'
+  },
+  tennis: {
+    title: '🎾 Tennis — /tennis/',
+    url: '/tennis/',
+    desc: 'ATP, WTA, Grand Slams (Roland Garros, Wimbledon, US Open, Australian Open). Key focus: Kamilla Rakhimova and other Uzbek tennis players — significant local search interest.',
+    schema: ['NewsArticle', 'SportsEvent', 'Person (Rakhimova)'],
+    content: 'Tournament news, match results, Uzbek player tracking',
+    priority: 'HIGH — Rakhimova is a differentiating entity'
+  },
+  boxing: {
+    title: '🥊 Boxing & MMA — /boks-mma/',
+    url: '/boks-mma/',
+    desc: 'Local Uzbek boxing (Olympic tradition), international heavyweight news, MMA.',
+    schema: ['NewsArticle', 'SportsEvent', 'Person'],
+    content: 'Fight previews, results, fighter profiles',
+    priority: 'MEDIUM'
+  },
+  athletics: {
+    title: '🏃 Athletics & Olympics — /atletika-olimpiya/',
+    url: '/atletika-olimpiya/',
+    desc: 'Track and field, Olympic sports, major multi-sport events. Uzbekistan has Olympic medal history.',
+    schema: ['NewsArticle', 'SportsEvent'],
+    content: 'Competition news, athlete profiles, Olympic coverage',
+    priority: 'MEDIUM — spikes around Olympics/World Championships'
+  },
+  upl: {
+    title: '🇺🇿 Uzbekistan Premier League — /futbol/uzbekiston-premier-ligasi/',
+    url: '/futbol/uzbekiston-premier-ligasi/',
+    desc: 'Full hub for the Uzbekistan Premier League. Table, results, top scorers, news, club profiles.',
+    schema: ['SportsEvent', 'SportsOrganization', 'NewsArticle'],
+    content: 'League table (live), match results, previews, club news, season review',
+    priority: 'CRITICAL — primary local football authority'
+  },
+  milliy: {
+    title: '🏟 National Team — /futbol/milliy-jamoa/',
+    url: '/futbol/milliy-jamoa/',
+    desc: 'Uzbekistan national football team hub. Squad, upcoming matches, historical results, news.',
+    schema: ['SportsOrganization', 'SportsEvent', 'Person (players)'],
+    content: 'Match previews, results, squad news, player profiles',
+    priority: 'CRITICAL — highest search interest for UZB fans'
+  },
+  ucl: {
+    title: '⭐ Champions League — /futbol/champions-league/',
+    url: '/futbol/champions-league/',
+    desc: 'UEFA Champions League hub. All matches, groups, knockouts, Uzbek player appearances.',
+    schema: ['SportsEvent', 'NewsArticle'],
+    content: 'Match previews, results, group tables, Husanov/UCL angles',
+    priority: 'HIGH — massive search interest'
+  },
+  worldcup: {
+    title: '🌍 World Cup 2026 — /futbol/jahon-kubogi/',
+    url: '/futbol/jahon-kubogi/',
+    desc: 'FIFA World Cup 2026 (USA/Canada/Mexico). Major content opportunity. Uzbekistan qualification news. All group stage and knockout coverage.',
+    schema: ['SportsEvent', 'NewsArticle', 'FAQPage'],
+    content: 'Qualification, draw, group stage, match results, Uzbek angle',
+    priority: '🔥 TOP OPPORTUNITY — build hub now before peak traffic'
+  },
+  abroad: {
+    title: '✈ Uzbeks Abroad — /futbol/uzb-futbolchilar-chetda/',
+    url: '/futbol/uzb-futbolchilar-chetda/',
+    desc: 'Tracks all Uzbek players playing in foreign leagues. Husanov (Man City), and others. Aggregated news, stats, appearances.',
+    schema: ['NewsArticle', 'Person', 'SportsOrganization'],
+    content: 'Weekly roundup, individual player news, stats',
+    priority: 'HIGH — unique content qalampir.uz does not prioritize'
+  },
+  transfer: {
+    title: '💸 Transfer News — /futbol/transfer/',
+    url: '/futbol/transfer/',
+    desc: 'Football transfer hub. Summer and winter window. Uzbek player transfer rumours and confirmed moves.',
+    schema: ['NewsArticle'],
+    content: 'Transfer rumours, confirmed moves, window roundup',
+    priority: 'HIGH — evergreen search interest'
+  },
+  'player-entity': {
+    title: '👤 Player Entity Pages — /futbolchi/[slug]/',
+    url: '/futbolchi/abdukodir-husanov/',
+    desc: 'Canonical entity page per player. Photo, current club, position, bio, season stats table, career timeline, transfer history, all related news, FAQ section, related players.',
+    schema: ['Person', 'SportsOrganization', 'FAQPage', 'BreadcrumbList'],
+    content: 'Bio (300w), stats table, career timeline, news feed, 8 FAQ Q&As',
+    priority: '🔑 KEY DIFFERENTIATOR — MISSING on qalampir.uz'
+  },
+  'club-entity': {
+    title: '🏟 Club Entity Pages — /jamoa/[slug]/',
+    url: '/jamoa/manchester-city/',
+    desc: 'Canonical entity page per club. Club info, stadium, manager, current squad (Uzbek players highlighted), results, fixtures, news feed.',
+    schema: ['SportsOrganization', 'NewsArticle', 'BreadcrumbList'],
+    content: 'Club overview, current form, Uzbek connection angle, news',
+    priority: '🔑 KEY DIFFERENTIATOR — MISSING on qalampir.uz'
+  },
+  'comp-entity': {
+    title: '🏆 Competition Hubs — /musobaqa/[slug]/',
+    url: '/musobaqa/england-premier-league-2025-26/',
+    desc: 'Canonical page per competition + season. Live table, top scorers, latest results, upcoming fixtures, news.',
+    schema: ['SportsEvent', 'SportsOrganization', 'BreadcrumbList'],
+    content: 'Table, scorers, results, fixtures, seasonal news',
+    priority: 'HIGH — drives recurring daily queries'
+  },
+  'author-entity': {
+    title: '✍ Author Profiles — /muallif/[slug]/',
+    url: '/muallif/sardor-yusupov/',
+    desc: 'Journalist authority page. Photo, name, credentials, years covering sport, clubs/events covered, social links, all published articles. Person schema. Key E-E-A-T signal.',
+    schema: ['Person', 'BreadcrumbList'],
+    content: 'Bio, credentials, article archive, social links',
+    priority: 'HIGH — must exist before first article is published'
+  },
+  scores: {
+    title: '📡 Live Scores & Results — /natijalar/',
+    url: '/natijalar/',
+    desc: 'Real-time match scores across all sports. Daily recurring traffic. Drives habitual visit behavior. Missing completely from qalampir.uz sports section.',
+    schema: ['SportsEvent', 'LiveBlogPosting'],
+    content: 'Live scores widget, today results, recent results archive',
+    priority: '🔑 KEY DIFFERENTIATOR — MISSING on qalampir.uz'
+  },
+  tables: {
+    title: '📋 League Tables — /jadvallar/',
+    url: '/jadvallar/',
+    desc: 'Current standings for all major leagues (UPL, EPL, La Liga, UCL). Per-competition sub-pages. Updated automatically.',
+    schema: ['SportsEvent', 'SportsOrganization'],
+    content: 'Live table per competition, trend indicators',
+    priority: 'HIGH — recurring high-intent queries'
+  },
+  video: {
+    title: '🎥 Video Content — /video/',
+    url: '/video/',
+    desc: 'Match highlights, interview clips, analysis videos. Sport sub-sections (/video/futbol/, /video/tennis/).',
+    schema: ['VideoObject', 'NewsArticle'],
+    content: 'Embedded video + transcript + description for SEO',
+    priority: 'HIGH — engagement and Discover visibility'
+  },
+  analiz: {
+    title: '🔬 Analysis & Opinion — /analiz/',
+    url: '/analiz/',
+    desc: 'Long-form analytical pieces (1000-2000 words). Tactical breakdowns, season reviews, expert opinions. The key "helpful-first" content type that qalampir.uz lacks.',
+    schema: ['NewsArticle', 'Person (author)'],
+    content: 'Deep dives, tactical analysis, opinion columns',
+    priority: '🔑 HCU DIFFERENTIATOR — must publish 2x per week'
+  },
+  intervyu: {
+    title: '🎙 Interviews — /intervyu/',
+    url: '/intervyu/',
+    desc: 'Exclusive Q&A interviews with players, coaches, sports officials. Key E-E-A-T signal demonstrating original reporting and real-world access.',
+    schema: ['NewsArticle', 'Person'],
+    content: 'Q&A format, 600-1000 words, author byline with credentials',
+    priority: 'HIGH — E-E-A-T authority builder'
+  }
+};
+
+function showDetail(key) {
+  document.querySelectorAll('.node').forEach(n => n.classList.remove('selected'));
+  event.currentTarget.classList.add('selected');
+
+  const d = details[key];
+  if (!d) return;
+
+  const el = document.getElementById('node-detail');
+  el.style.display = 'block';
+  el.innerHTML = `
+    <h3>${d.title}</h3>
+    <div class="detail-url">${d.url}</div>
+    <div class="detail-grid">
+      <div class="detail-item"><strong>Description</strong>${d.desc}</div>
+      <div class="detail-item">
+        <strong>Schema Markup</strong>${d.schema.map(s => `<span class="tag tech">${s}</span>`).join('')}
+        <br><br>
+        <strong>Priority</strong><span style="font-size:10px">${d.priority}</span>
+      </div>
+    </div>
+    <div style="margin-top:8px"><strong style="font-size:9px;text-transform:uppercase;color:#888">Content on this page</strong><br><span style="font-size:10px">${d.content}</span></div>
+  `;
+  el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+</script>
+</body>
+</html>
