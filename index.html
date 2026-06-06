@@ -13,10 +13,7 @@
     <header>
         <div class="top-bar">
             <div class="container d-flex justify-between align-center">
-                <a href="index.html" class="logo">
-                    <span style="color: var(--primary-color); font-size: 28px; font-weight: 800; letter-spacing:-1px;">Sports</span>
-                    <span style="background-color: var(--primary-color); color: #000; font-size: 20px; font-weight: 900; padding: 2px 8px; border-radius: 8px; margin-left: 5px;">KG</span>
-                </a>
+                <a href="index.html" class="logo"><img src="assets/logo.png" alt="SportsHub" style="height: 40px;"></a>
                 <div class="top-bar-right">
                     <div class="exchange-rates">
                         <div>Exchange Rates UZS</div>
@@ -27,7 +24,11 @@
                     <div class="header-actions">
                         <i class="fas fa-search search-icon"></i>
                         <i class="fas fa-user user-icon"></i>
-                        <div class="lang-select">KY | RU | EN <i class="fas fa-chevron-down"></i></div>
+                        <select id="langSwitcher" class="lang-select" style="background:transparent; border:none; cursor:pointer; font-family:inherit; font-weight:600; outline:none; appearance:none;">
+                            <option value="RU">RU</option>
+                            <option value="UZ-CYRL">OʻZ (Kiril)</option>
+                            <option value="UZ-LATN">OʻZ (Lotin)</option>
+                        </select>
                     </div>
                 </div>
             </div>
@@ -239,7 +240,7 @@
         <!-- Full Width Business Banner -->
         <div class="ad-banner" style="background:#E31B23; color:#fff; padding:30px; display:flex; justify-content:space-between; align-items:center; border-radius:var(--border-radius-lg); margin-bottom:40px; box-shadow:var(--shadow-lg);">
             <div style="display:flex; align-items:center; gap:20px;">
-                <h2 style="font-size:24px; font-weight:800;">Sports KG BUSINESS</h2>
+                <h2 style="font-size:24px; font-weight:800;">SportsHub BUSINESS</h2>
                 <div style="width:2px; height:30px; background:rgba(255,255,255,0.3);"></div>
                 <p style="margin:0; font-weight:500; opacity:0.9;">Latest financial insights and corporate news</p>
             </div>
@@ -523,10 +524,7 @@
     <footer class="footer">
         <div class="container">
             <div class="footer-top">
-                <a href="index.html" class="logo">
-                    <span style="color: var(--primary-color); font-size: 28px; font-weight: 800; letter-spacing:-1px;">Sports</span>
-                    <span style="background-color: var(--primary-color); color: #000; font-size: 20px; font-weight: 900; padding: 2px 8px; border-radius: 8px; margin-left: 5px;">KG</span>
-                </a>
+                <a href="index.html" class="logo"><img src="assets/logo.png" alt="SportsHub" style="height: 40px;"></a>
                 <div class="footer-links">
                     <a href="#">About website</a>
                     <a href="#">Business</a>

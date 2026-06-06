@@ -1,15 +1,15 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
 
 :root {
-  --primary-color: #E31B23; /* Signature Red */
+  --primary-color: #0B25B3; /* SportsHub Blue */
   --text-dark: #1A1A1A;
   --text-muted: #666666;
   --bg-light: #F8F9FA;
   --bg-white: #FFFFFF;
   --border-color: #EAEAEA;
   --shadow-sm: 0 4px 12px rgba(0,0,0,0.05);
-  --shadow-md: 0 8px 24px rgba(227, 27, 35, 0.15);
-  --shadow-lg: 0 16px 40px rgba(227, 27, 35, 0.2);
+  --shadow-md: 0 8px 24px rgba(11, 37, 179, 0.15);
+  --shadow-lg: 0 16px 40px rgba(11, 37, 179, 0.2);
   --border-radius: 16px;
   --border-radius-lg: 24px;
   --transition: all 0.25s ease;

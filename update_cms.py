@@ -1,4 +1,11 @@
+import os
 
+cms_path = "js/cms.js"
+
+with open(cms_path, "r", encoding="utf-8") as f:
+    cms_content = f.read()
+
+new_cms_content = """
 const SPACE_ID = 'lk7wvlqdutqz';
 const ACCESS_TOKEN = '4QKvL7hxF_s93ZyU7B9U28goB9_SugN0eGRexY0DXtI';
 
@@ -46,7 +53,7 @@ const I18N_MAP = {
     'UZ-LATN': {
         'Local': 'Mahalliy',
         'World': 'Dunyoda',
-        'Art & Culture': 'San\'at va Madaniyat',
+        'Art & Culture': 'San\\'at va Madaniyat',
         'Interviews': 'Intervyular',
         'Helpful': 'Foydali',
         'Sport': 'Sport',
@@ -55,12 +62,12 @@ const I18N_MAP = {
         'Live': 'Jonli',
         'Local News': 'Mahalliy yangiliklar',
         'More on the topic': 'Mavzuga oid',
-        'Most read': 'Eng ko\'p o\'qilgan',
+        'Most read': 'Eng ko\\'p o\\'qilgan',
         'Search': 'Qidirish',
-        'Contact Us': 'Biz bilan bog\'lanish',
+        'Contact Us': 'Biz bilan bog\\'lanish',
         'About': 'Biz haqimizda',
         'SportsHub BUSINESS': 'SportsHub BIZNES',
-        'Learn for you': 'O\'zingiz uchun biling',
+        'Learn for you': 'O\\'zingiz uchun biling',
         'we are on facebook too': 'biz facebookdamiz'
     }
 };
@@ -109,7 +116,7 @@ function translateUI() {
 }
 
 function stripLangPrefix(title) {
-    return title.replace(/^\[(RU|UZ-CYRL|UZ-LATN)\]\s*/i, '');
+    return title.replace(/^\\[(RU|UZ-CYRL|UZ-LATN)\\]\\s*/i, '');
 }
 
 // Fetch articles from Contentful
@@ -321,7 +328,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     if (typeof article.content === 'object') {
                         htmlContent = '<p>Rich text content from CMS. Please ensure you output HTML or simple text in the CMS field.</p>';
                     } else {
-                        htmlContent = article.content.split('\n').map(p => p.trim() ? `<p>${p}</p>` : '').join('');
+                        htmlContent = article.content.split('\\n').map(p => p.trim() ? `<p>${p}</p>` : '').join('');
                     }
                     contentEl.innerHTML = htmlContent;
                 }
@@ -332,3 +339,9 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     await renderGrids();
 });
+"""
+
+with open(cms_path, "w", encoding="utf-8") as f:
+    f.write(new_cms_content)
+
+print("cms.js updated successfully.")
