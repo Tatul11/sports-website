@@ -57,6 +57,15 @@ export const config = {
     reportLookbackHours: Number(optional('REPORT_LOOKBACK_HOURS', '6')),
     tzOffset: optional('TZ_OFFSET', '+05:00'),
   },
+  telegram: {
+    // Only needed for the telegram-watch command.
+    botToken: optional('TELEGRAM_BOT_TOKEN', ''),
+    channelId: optional('TELEGRAM_CHANNEL_ID', ''),
+  },
+  site: {
+    // Used by telegram-watch to read the Google News sitemap (last-48h published articles).
+    baseUrl: optional('SITE_BASE_URL', 'https://sportshub.uz'),
+  },
 } as const;
 
 export const LOCALES = ['uz-Latn', 'uz-Cyrl', 'ru'] as const;

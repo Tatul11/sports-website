@@ -1,6 +1,7 @@
 import { parseArgs } from 'node:util';
 import { runOne, scanPreviews, scanReports } from './pipeline.js';
 import { runRewrite } from './rewritePipeline.js';
+import { checkAndPostNewArticles } from './sitemapWatch.js';
 
 /**
  * CLI entry point.
@@ -9,6 +10,7 @@ import { runRewrite } from './rewritePipeline.js';
  *   npm run scan:previews                   scan monitored leagues for upcoming fixtures
  *   npm run scan:reports                    scan monitored leagues for finished fixtures
  *   npm run rewrite -- --url <article-url>  fetch + rewrite an article, save as a Google Doc
+ *   npm run telegram:watch                  post newly-published Contentful articles to Telegram
  */
 async function main() {
   const command = process.argv[2];
@@ -36,6 +38,9 @@ async function main() {
       await runRewrite(values.url);
       break;
     }
+    case 'telegram-watch':
+      await checkAndPostNewArticles();
+      break;
     default:
       console.log(
         [
@@ -45,6 +50,7 @@ async function main() {
           '  npm run scan:previews',
           '  npm run scan:reports',
           '  npm run rewrite -- --url <article-url>',
+          '  npm run telegram:watch',
         ].join('\n'),
       );
       process.exit(1);
@@ -52,6 +58,6 @@ async function main() {
 }
 
 main().catch((err) => {
-  console.error('\n✗ ' + (err as Error).message);
+  console.error('\n✗ Error details:', err);
   process.exit(1);
 });

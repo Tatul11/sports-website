@@ -12,6 +12,7 @@
     "scan:previews": "tsx src/index.ts scan-previews",
     "scan:reports": "tsx src/index.ts scan-reports",
     "rewrite": "tsx src/index.ts rewrite",
+    "telegram:watch": "tsx src/index.ts telegram-watch",
     "typecheck": "tsc --noEmit",
     "build": "tsc",
     "start": "node dist/index.js"
