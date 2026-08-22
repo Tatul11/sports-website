@@ -15,7 +15,9 @@ function optional(name: string, fallback: string): string {
 
 export const config = {
   claude: {
-    apiKey: required('ANTHROPIC_API_KEY'),
+    // Optional at load time — only needed for pipelines that actually call Claude
+    // (preview/report/scan:*/rewrite). telegram-watch never touches this.
+    apiKey: optional('ANTHROPIC_API_KEY', ''),
     model: optional('CLAUDE_MODEL', 'claude-sonnet-5'),
   },
   openai: {
