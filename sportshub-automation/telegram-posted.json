@@ -1,6 +1,6 @@
 {
-  "seeded": true,
-  "posted": [
+  "seededUzLatn": true,
+  "postedUzLatn": [
     "https://sportshub.uz/futbol/superliga/superliga-18-tur-toplar-nisbati-va-statistika",
     "https://sportshub.uz/futbol/superliga/superliga-19-tur-prevyu-oyinlar-jadvali",
     "https://sportshub.uz/avtosport/formula-1/rassell-zandvort-gpsida-sprint-uchun-poulni-qo-lga-kiritdi",
@@ -122,6 +122,14 @@
     "https://sportshub.uz/futbol/superliga/qizilqum-nasaf-1-0-obzor-matcha-natija",
     "https://sportshub.uz/futbol/superliga/mashal-navbahor-0-2-obzor-matcha-natija",
     "https://sportshub.uz/futbol/superliga/lokomotiv-bunyodkor-4-1-obzor-matcha-natija",
-    "https://sportshub.uz/futbol/la-liga/valensiya-betis-0-1-obzor-matcha-natija"
-  ]
+    "https://sportshub.uz/futbol/la-liga/valensiya-betis-0-1-obzor-matcha-natija",
+    "https://sportshub.uz/avtosport/superkarlar/ford-wec-uchun-yangi-hypercar-bolidining-dastlabki-sinovlarini-yakunladi",
+    "https://sportshub.uz/avtosport/nascar/nascar-2027-yilgi-cup-o-reilly-va-truck-seriyalari-uchun-to-liq-jadvalni-e-lon-qildi",
+    "https://sportshub.uz/avtosport/motogp/ai-ogura-qo-l-jarohati-sababli-aragon-gran-prisini-o-tkazib-yuboradi",
+    "https://sportshub.uz/boshqa-sportlar/jasur-jaysunov-o-zbek-taekvondochisining-yutuqlarga-to-la-yo-li",
+    "https://sportshub.uz/kurash/judo/yosh-dzyudochilarimiz-ekvadordagi-jahon-chempionatidan-medallar-bilan-qaytdi",
+    "https://sportshub.uz/boks/professional/ikki-o-zbek-bokschisi-yakutskda-rus-raqiblari-bilan-ro-para-keladi"
+  ],
+  "seededRu": false,
+  "postedRu": []
 }

@@ -62,7 +62,8 @@ export const config = {
   telegram: {
     // Only needed for the telegram-watch command.
     botToken: optional('TELEGRAM_BOT_TOKEN', ''),
-    channelId: optional('TELEGRAM_CHANNEL_ID', ''),
+    channelId: optional('TELEGRAM_CHANNEL_ID', ''), // uz-Latn channel
+    channelIdRu: optional('TELEGRAM_CHANNEL_ID_RU', ''), // ru channel — leave unset to skip it
   },
   site: {
     // Used by telegram-watch to read the Google News sitemap (last-48h published articles).
