@@ -76,7 +76,7 @@ const SUBCATEGORY_EMOJI: Record<string, string> = {
   nascar: '🏁',
   superkarlar: '🚗',
   // futbol — domestic tiers and continental competitions
-  superliga: '👑',
+  superliga: '🇺🇿',
   'pro-liga': '🥈',
   ozbekiston: '🇺🇿',
   cl: '⭐',
