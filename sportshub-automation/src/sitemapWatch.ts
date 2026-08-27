@@ -74,16 +74,6 @@ function categoryEmoji(url: string): string {
   return (category && CATEGORY_EMOJI[category]) ?? '🏆';
 }
 
-/** Telegram hashtags can't contain hyphens, so "la-liga" → "#laliga". */
-function toHashtag(segment: string): string {
-  return `#${segment.replace(/[^a-zA-Z0-9]/g, '')}`;
-}
-
-function categoryHashtags(url: string): string[] {
-  const { category, subcategory } = categorySegments(url);
-  return [category, subcategory].filter((s): s is string => Boolean(s)).map(toHashtag);
-}
-
 function unescapeXml(s: string): string {
   return s
     .replace(/&quot;/g, '"')
@@ -142,7 +132,6 @@ async function processLocale(
       title: entry.title,
       url: entry.loc,
       emoji: categoryEmoji(entry.loc),
-      hashtags: categoryHashtags(entry.loc),
       channelId,
       buttonText,
     });
