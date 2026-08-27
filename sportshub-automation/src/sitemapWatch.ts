@@ -70,6 +70,19 @@ const SUBCATEGORY_EMOJI: Record<string, string> = {
   voleybol: '🏐',
   'yengil-atletika': '🏃',
   judo: '🥋',
+  // avtosport
+  'formula-1': '🏎️',
+  motogp: '🏍️',
+  nascar: '🏁',
+  superkarlar: '🚗',
+  // futbol — domestic tiers and continental competitions
+  superliga: '👑',
+  'pro-liga': '🥈',
+  ozbekiston: '🇺🇿',
+  cl: '⭐',
+  kubok: '🏆',
+  'la-liga': '🇪🇸',
+  yevropa: '🇪🇺',
 };
 
 /** uz-Latn URLs have no locale prefix (e.g. /futbol/...); ru URLs are prefixed
