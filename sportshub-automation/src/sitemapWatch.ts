@@ -78,11 +78,11 @@ const SUBCATEGORY_EMOJI: Record<string, string> = {
   nascar: '🏁',
   superkarlar: '🚗',
   // futbol — domestic tiers and continental competitions
-  superliga: '🇺🇿',
-  'pro-liga': '🥈',
+  superliga: '⚽🇺🇿',
+  'pro-liga': '⚽🇺🇿',
   ozbekiston: '🇺🇿',
   cl: '⭐',
-  kubok: '🏆',
+  kubok: '🏆🇺🇿',
   'la-liga': '🇪🇸',
   yevropa: '🇪🇺',
   // boks — national team gets its own combo per request; havaskor (amateur)
