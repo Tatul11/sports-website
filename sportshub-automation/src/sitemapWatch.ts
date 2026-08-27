@@ -60,6 +60,18 @@ const CATEGORY_EMOJI: Record<string, string> = {
   exclusive: '🎙️',
 };
 
+// Checked before CATEGORY_EMOJI — "boshqa-sportlar" (Other Sports) is a catch-all
+// bucket, so basketball/cybersport/chess/etc. need their own icon or they'd all just
+// get the generic 🏆. judo gets its own too (more fitting than kurash's 🤼).
+const SUBCATEGORY_EMOJI: Record<string, string> = {
+  basketbol: '🏀',
+  kibersport: '🎮',
+  shaxmat: '♟️',
+  voleybol: '🏐',
+  'yengil-atletika': '🏃',
+  judo: '🥋',
+};
+
 /** uz-Latn URLs have no locale prefix (e.g. /futbol/...); ru URLs are prefixed
  *  (e.g. /ru/futbol/...) — skip that segment so category/subcategory line up. */
 function categorySegments(url: string): { category?: string; subcategory?: string } {
@@ -70,7 +82,8 @@ function categorySegments(url: string): { category?: string; subcategory?: strin
 }
 
 function categoryEmoji(url: string): string {
-  const { category } = categorySegments(url);
+  const { category, subcategory } = categorySegments(url);
+  if (subcategory && SUBCATEGORY_EMOJI[subcategory]) return SUBCATEGORY_EMOJI[subcategory];
   return (category && CATEGORY_EMOJI[category]) ?? '🏆';
 }
 
