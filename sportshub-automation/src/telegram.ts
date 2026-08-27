@@ -9,6 +9,7 @@ export async function postArticleToTelegram(article: {
   title: string;
   url: string;
   emoji: string;
+  hashtags: string[];
   channelId: string;
   buttonText: string;
 }): Promise<void> {
@@ -16,7 +17,8 @@ export async function postArticleToTelegram(article: {
     throw new Error('Missing TELEGRAM_BOT_TOKEN in .env — see .env.example.');
   }
 
-  const text = `${article.emoji} <b>${escapeHtml(article.title)}</b><a href="${article.url}">​</a>`;
+  const hashtagLine = article.hashtags.length > 0 ? `\n\n${article.hashtags.join(' ')}` : '';
+  const text = `${article.emoji} <b>${escapeHtml(article.title)}</b>${hashtagLine}<a href="${article.url}">​</a>`;
 
   const res = await fetch(`https://api.telegram.org/bot${config.telegram.botToken}/sendMessage`, {
     method: 'POST',

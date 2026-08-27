@@ -61,11 +61,27 @@ const CATEGORY_EMOJI: Record<string, string> = {
 };
 
 /** uz-Latn URLs have no locale prefix (e.g. /futbol/...); ru URLs are prefixed
- *  (e.g. /ru/futbol/...) — skip that segment so the category lookup lines up. */
+ *  (e.g. /ru/futbol/...) — skip that segment so category/subcategory line up. */
+function categorySegments(url: string): { category?: string; subcategory?: string } {
+  const raw = new URL(url).pathname.split('/').filter(Boolean);
+  const segments = raw[0] === 'ru' || raw[0] === 'uzc' ? raw.slice(1) : raw;
+  // [category, slug] → no subcategory. [category, subcategory, slug, ...] → both.
+  return { category: segments[0], subcategory: segments.length >= 3 ? segments[1] : undefined };
+}
+
 function categoryEmoji(url: string): string {
-  const segments = new URL(url).pathname.split('/').filter(Boolean);
-  const category = segments[0] === 'ru' || segments[0] === 'uzc' ? segments[1] : segments[0];
-  return CATEGORY_EMOJI[category] ?? '🏆';
+  const { category } = categorySegments(url);
+  return (category && CATEGORY_EMOJI[category]) ?? '🏆';
+}
+
+/** Telegram hashtags can't contain hyphens, so "la-liga" → "#laliga". */
+function toHashtag(segment: string): string {
+  return `#${segment.replace(/[^a-zA-Z0-9]/g, '')}`;
+}
+
+function categoryHashtags(url: string): string[] {
+  const { category, subcategory } = categorySegments(url);
+  return [category, subcategory].filter((s): s is string => Boolean(s)).map(toHashtag);
 }
 
 function unescapeXml(s: string): string {
@@ -126,6 +142,7 @@ async function processLocale(
       title: entry.title,
       url: entry.loc,
       emoji: categoryEmoji(entry.loc),
+      hashtags: categoryHashtags(entry.loc),
       channelId,
       buttonText,
     });
