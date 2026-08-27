@@ -1,9 +1,10 @@
 name: Telegram — post new articles
 
 on:
-  schedule:
-    # nudge: re-registering the schedule after GitHub's scheduler stopped firing it
-    - cron: '7,37 * * * *'
+  # No native `schedule:` trigger — GitHub's own cron scheduler proved unreliable
+  # (stopped firing for 10+ hours despite being active). An external cron-job.org
+  # timer calls this via workflow_dispatch every 30 min instead. Keeping both would
+  # risk two overlapping runs racing on the same state file.
   workflow_dispatch: {}
 
 permissions:
