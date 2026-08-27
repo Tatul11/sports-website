@@ -92,6 +92,9 @@ const SUBCATEGORY_EMOJI: Record<string, Record<string, string>> = {
     kubok: '🏆🇺🇿',
     'la-liga': '🇪🇸',
     yevropa: '🇪🇺',
+    jch: '🌍', // Jahon chempionati — World Championship
+    afc: '🌏', // AFC / Asia
+    transferlar: '🔄', // Transfers
     apl: '🏴󠁧󠁢󠁥󠁮󠁧󠁿',
     'seriya-a': '🇮🇹',
     bundesliga: '🇩🇪',
