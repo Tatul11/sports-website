@@ -16,7 +16,7 @@ export async function postArticleToTelegram(article: {
     throw new Error('Missing TELEGRAM_BOT_TOKEN in .env — see .env.example.');
   }
 
-  const text = `${article.emoji} <b>${escapeHtml(article.title)}</b><a href="${article.url}">​</a>`;
+  const text = `${article.emoji} <b>${escapeHtml(truncateTitle(article.title))}</b><a href="${article.url}">​</a>`;
 
   const res = await fetch(`https://api.telegram.org/bot${config.telegram.botToken}/sendMessage`, {
     method: 'POST',
@@ -39,4 +39,13 @@ export async function postArticleToTelegram(article: {
 
 function escapeHtml(s: string): string {
   return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+// Keeps the post's headline to roughly one line on a phone screen — the full title
+// still shows on the site itself, this only shortens what appears in the Telegram text.
+const MAX_TITLE_LENGTH = 55;
+
+function truncateTitle(title: string): string {
+  if (title.length <= MAX_TITLE_LENGTH) return title;
+  return `${title.slice(0, MAX_TITLE_LENGTH - 1).trimEnd()}…`;
 }
