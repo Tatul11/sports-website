@@ -2,6 +2,7 @@ name: Telegram — post new articles
 
 on:
   schedule:
+    # nudge: re-registering the schedule after GitHub's scheduler stopped firing it
     - cron: '7,37 * * * *'
   workflow_dispatch: {}
 
