@@ -69,6 +69,8 @@ const SUBCATEGORY_EMOJI: Record<string, string> = {
   shaxmat: '♟️',
   voleybol: '🏐',
   'yengil-atletika': '🏃',
+  'ogir-atletika': '🏋️',
+  suzish: '🏊',
   judo: '🥋',
   // avtosport
   'formula-1': '🏎️',
@@ -83,6 +85,9 @@ const SUBCATEGORY_EMOJI: Record<string, string> = {
   kubok: '🏆',
   'la-liga': '🇪🇸',
   yevropa: '🇪🇺',
+  // boks — national team gets its own combo per request; havaskor (amateur)
+  // stays on boks's 🥊 fallback, no need for a separate icon
+  'terma-jamoa': '🥊🇺🇿',
 };
 
 /** uz-Latn URLs have no locale prefix (e.g. /futbol/...); ru URLs are prefixed
