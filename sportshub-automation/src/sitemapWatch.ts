@@ -60,34 +60,47 @@ const CATEGORY_EMOJI: Record<string, string> = {
   exclusive: '🎙️',
 };
 
-// Checked before CATEGORY_EMOJI — "boshqa-sportlar" (Other Sports) is a catch-all
-// bucket, so basketball/cybersport/chess/etc. need their own icon or they'd all just
-// get the generic 🏆. judo gets its own too (more fitting than kurash's 🤼).
-const SUBCATEGORY_EMOJI: Record<string, string> = {
-  basketbol: '🏀',
-  kibersport: '🎮',
-  shaxmat: '♟️',
-  voleybol: '🏐',
-  'yengil-atletika': '🏃',
-  'ogir-atletika': '🏋️',
-  suzish: '🏊',
-  judo: '🥋',
-  // avtosport
-  'formula-1': '🏎️',
-  motogp: '🏍️',
-  nascar: '🏁',
-  superkarlar: '🚗',
-  // futbol — domestic tiers and continental competitions
-  superliga: '⚽🇺🇿',
-  'pro-liga': '⚽🇺🇿',
-  ozbekiston: '🇺🇿',
-  cl: '⭐',
-  kubok: '🏆🇺🇿',
-  'la-liga': '🇪🇸',
-  yevropa: '🇪🇺',
-  // boks — national team gets its own combo per request; havaskor (amateur)
-  // stays on boks's 🥊 fallback, no need for a separate icon
-  'terma-jamoa': '🥊🇺🇿',
+// Keyed by [category][subcategory] rather than a flat map — "terma-jamoa" (national
+// team), for example, is a real subcategory under both futbol and boks, and a flat
+// map would've let one collide with and overwrite the other's icon.
+const SUBCATEGORY_EMOJI: Record<string, Record<string, string>> = {
+  // "boshqa-sportlar" (Other Sports) is a catch-all bucket, so basketball/cybersport/
+  // chess/etc. need their own icon or they'd all just get the generic 🏆.
+  'boshqa-sportlar': {
+    basketbol: '🏀',
+    kibersport: '🎮',
+    shaxmat: '♟️',
+    voleybol: '🏐',
+    'yengil-atletika': '🏃',
+    'ogir-atletika': '🏋️',
+    suzish: '🏊',
+  },
+  kurash: {
+    judo: '🥋', // more fitting than kurash's own 🤼
+  },
+  avtosport: {
+    'formula-1': '🏎️',
+    motogp: '🏍️',
+    nascar: '🏁',
+    superkarlar: '🚗',
+  },
+  futbol: {
+    superliga: '⚽🇺🇿',
+    'pro-liga': '⚽🇺🇿',
+    ozbekiston: '🇺🇿',
+    cl: '⭐',
+    kubok: '🏆🇺🇿',
+    'la-liga': '🇪🇸',
+    yevropa: '🇪🇺',
+    apl: '🏴󠁧󠁢󠁥󠁮󠁧󠁿',
+    'seriya-a': '🇮🇹',
+    bundesliga: '🇩🇪',
+    'liga-1': '🇫🇷',
+  },
+  boks: {
+    // havaskor (amateur) stays on boks's plain 🥊 fallback, no need for its own icon
+    'terma-jamoa': '🥊🇺🇿',
+  },
 };
 
 /** uz-Latn URLs have no locale prefix (e.g. /futbol/...); ru URLs are prefixed
@@ -101,7 +114,8 @@ function categorySegments(url: string): { category?: string; subcategory?: strin
 
 function categoryEmoji(url: string): string {
   const { category, subcategory } = categorySegments(url);
-  if (subcategory && SUBCATEGORY_EMOJI[subcategory]) return SUBCATEGORY_EMOJI[subcategory];
+  const subEmoji = category && subcategory ? SUBCATEGORY_EMOJI[category]?.[subcategory] : undefined;
+  if (subEmoji) return subEmoji;
   return (category && CATEGORY_EMOJI[category]) ?? '🏆';
 }
 
