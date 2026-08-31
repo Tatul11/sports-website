@@ -122,6 +122,14 @@ function categoryEmoji(url: string): string {
   return (category && CATEGORY_EMOJI[category]) ?? '🏆';
 }
 
+/** The trailing path segment is the article's stable identity — the category/subcategory
+ *  segments before it can change if the site recategorizes the article, which would
+ *  otherwise make the dedup logic see a "new" URL and repost the same article. */
+function articleSlug(url: string): string {
+  const segments = new URL(url).pathname.split('/').filter(Boolean);
+  return segments[segments.length - 1] ?? url;
+}
+
 function unescapeXml(s: string): string {
   return s
     .replace(/&quot;/g, '"')
@@ -172,10 +180,11 @@ async function processLocale(
     return 0;
   }
 
-  const posted = new Set(state[postedKey]);
+  const postedSlugs = new Set(state[postedKey].map(articleSlug));
   let postedCount = 0;
   for (const entry of localeEntries) {
-    if (posted.has(entry.loc)) continue;
+    const slug = articleSlug(entry.loc);
+    if (postedSlugs.has(slug)) continue;
     await postArticleToTelegram({
       title: entry.title,
       url: entry.loc,
@@ -184,8 +193,8 @@ async function processLocale(
       buttonText,
     });
     console.log(`    → posted to Telegram (${hreflang}): "${entry.title}"`);
-    posted.add(entry.loc);
-    state[postedKey] = [...posted];
+    postedSlugs.add(slug);
+    state[postedKey] = [...state[postedKey], entry.loc];
     saveState(state);
     postedCount++;
   }
