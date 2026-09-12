@@ -7,10 +7,12 @@ import { postArticleToTelegram } from './telegram.js';
 // "already posted" list persists between runs without needing any local machine.
 const STATE_PATH = './telegram-posted.json';
 
+type Locale = 'uz-Latn' | 'uz-Cyrl' | 'ru';
+
 interface SitemapEntry {
   loc: string;
   title: string;
-  alternates: Record<string, string>; // hreflang -> href
+  locale: Locale;
 }
 
 interface State {
@@ -20,10 +22,20 @@ interface State {
   postedRu: string[];
 }
 
+/** uz-Latn URLs have no locale prefix (e.g. /futbol/...); ru URLs are prefixed
+ *  (e.g. /ru/futbol/...); uz-Cyrl URLs use /uzc/. Locale is read straight from the
+ *  URL rather than from the sitemap's optional xhtml:link hreflang alternates —
+ *  those stopped being emitted at some point, which silently broke matching. */
+function localeOf(url: string): Locale {
+  const first = new URL(url).pathname.split('/').filter(Boolean)[0];
+  if (first === 'ru') return 'ru';
+  if (first === 'uzc') return 'uz-Cyrl';
+  return 'uz-Latn';
+}
+
 /** Google News sitemaps only ever contain articles from roughly the last 48 hours
  *  (that's the spec), so every entry here is by definition "fresh". Each article
- *  appears as 3 <url> blocks (one per locale), all sharing the same hreflang
- *  alternates — the uz-Latn href is used as the stable per-article key. */
+ *  appears as 3 <url> blocks, one per locale. */
 async function fetchSitemapEntries(): Promise<SitemapEntry[]> {
   const url = `${config.site.baseUrl}/google-news-sitemap.xml`;
   const res = await fetch(url);
@@ -39,12 +51,7 @@ async function fetchSitemapEntries(): Promise<SitemapEntry[]> {
     const title = body.match(/<news:title>([^<]*)<\/news:title>/)?.[1];
     if (!loc || !title) continue;
 
-    const alternates: Record<string, string> = {};
-    for (const link of body.matchAll(/<xhtml:link rel="alternate" hreflang="([^"]*)" href="([^"]*)"/g)) {
-      alternates[link[1]] = link[2];
-    }
-
-    entries.push({ loc, title: unescapeXml(title), alternates });
+    entries.push({ loc, title: unescapeXml(title), locale: localeOf(loc) });
   }
   return entries;
 }
@@ -163,13 +170,13 @@ function saveState(state: State): void {
  *  Returns how many were posted. */
 async function processLocale(
   entries: SitemapEntry[],
-  hreflang: string,
+  locale: Locale,
   channelId: string,
   buttonText: string,
   key: 'UzLatn' | 'Ru',
   state: State,
 ): Promise<number> {
-  const localeEntries = entries.filter((e) => e.loc === e.alternates[hreflang]);
+  const localeEntries = entries.filter((e) => e.locale === locale);
   const seededKey = `seeded${key}` as const;
   const postedKey = `posted${key}` as const;
 
@@ -192,7 +199,7 @@ async function processLocale(
       channelId,
       buttonText,
     });
-    console.log(`    → posted to Telegram (${hreflang}): "${entry.title}"`);
+    console.log(`    → posted to Telegram (${locale}): "${entry.title}"`);
     postedSlugs.add(slug);
     state[postedKey] = [...state[postedKey], entry.loc];
     saveState(state);
@@ -212,7 +219,7 @@ export async function checkAndPostNewArticles(): Promise<void> {
 
   const uzLatnPosted = await processLocale(
     entries,
-    'uz-Latn-UZ',
+    'uz-Latn',
     config.telegram.channelId,
     "Batafsil o'qish →",
     'UzLatn',
@@ -221,7 +228,7 @@ export async function checkAndPostNewArticles(): Promise<void> {
 
   let ruPosted = 0;
   if (config.telegram.channelIdRu) {
-    ruPosted = await processLocale(entries, 'ru-UZ', config.telegram.channelIdRu, 'Читать полностью →', 'Ru', state);
+    ruPosted = await processLocale(entries, 'ru', config.telegram.channelIdRu, 'Читать полностью →', 'Ru', state);
   }
 
   const totalPosted = uzLatnPosted + ruPosted;
