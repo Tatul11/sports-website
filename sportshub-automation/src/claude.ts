@@ -74,7 +74,7 @@ export async function generateRewrite(article: SourceArticle): Promise<Rewritten
     try {
       const msg = await client.messages.create({
         model: config.claude.model,
-        max_tokens: 64000,
+        max_tokens: 8000,
         system: REWRITE_SYSTEM_PROMPT,
         messages: [{ role: 'user', content: buildRewriteUserPrompt(article) }],
       });
