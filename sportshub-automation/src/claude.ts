@@ -4,7 +4,10 @@ import { SYSTEM_PROMPT, buildUserPrompt } from './prompts.js';
 import { REWRITE_SYSTEM_PROMPT, buildRewriteUserPrompt } from './rewritePrompts.js';
 import type { MatchFacts, ArticleType, LocalisedArticle, SourceArticle, RewrittenArticle } from './types.js';
 
-const client = new Anthropic({ apiKey: config.claude.apiKey });
+// maxRetries covers retryable errors (connection resets, 429s, 5xxs) at the SDK level,
+// on top of our own outer retry loop in generateRewrite — the API has intermittent
+// "socket hang up" blips that a bare client.messages.create() call doesn't survive.
+const client = new Anthropic({ apiKey: config.claude.apiKey, maxRetries: 5 });
 
 /** Pull the first balanced JSON object out of a model response,
  *  tolerating stray prose or ```json fences. */
@@ -57,23 +60,44 @@ function validate(obj: any): void {
   }
 }
 
-/** URL-rewrite workflow: take extracted source article text and produce a trilingual rewrite. */
+/** URL-rewrite workflow: take extracted source article text and produce a trilingual rewrite.
+ *  Retries on both malformed JSON (the model occasionally leaves a stray unescaped quote
+ *  in a long response) and on the API call itself failing (intermittent connection resets/
+ *  socket hang-ups) — both used to be handled inconsistently: only JSON errors were retried,
+ *  since the client.messages.create() call sat outside the try/catch and any network error
+ *  from it propagated straight out, killing the whole run on what's usually a transient blip. */
 export async function generateRewrite(article: SourceArticle): Promise<RewrittenArticle> {
-  const msg = await client.messages.create({
-    model: config.claude.model,
-    max_tokens: 15000,
-    system: REWRITE_SYSTEM_PROMPT,
-    messages: [{ role: 'user', content: buildRewriteUserPrompt(article) }],
-  });
+  const maxAttempts = 4;
+  let lastErr: Error | undefined;
 
-  const textPart = msg.content.find((b) => b.type === 'text');
-  if (!textPart || textPart.type !== 'text') {
-    throw new Error('Claude returned no text content.');
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    try {
+      const msg = await client.messages.create({
+        model: config.claude.model,
+        max_tokens: 64000,
+        system: REWRITE_SYSTEM_PROMPT,
+        messages: [{ role: 'user', content: buildRewriteUserPrompt(article) }],
+      });
+
+      const textPart = msg.content.find((b) => b.type === 'text');
+      if (!textPart || textPart.type !== 'text') {
+        throw new Error('Claude returned no text content.');
+      }
+
+      const parsed = extractJson(textPart.text);
+      validateRewrite(parsed);
+      return parsed as RewrittenArticle;
+    } catch (err) {
+      lastErr = err as Error;
+      if (attempt < maxAttempts) {
+        const delayMs = 2000 * attempt;
+        console.log(`    (attempt ${attempt} failed — retrying in ${delayMs}ms: ${lastErr.message})`);
+        await new Promise((resolve) => setTimeout(resolve, delayMs));
+      }
+    }
   }
 
-  const parsed = extractJson(textPart.text);
-  validateRewrite(parsed);
-  return parsed as RewrittenArticle;
+  throw lastErr ?? new Error('Rewrite failed for an unknown reason.');
 }
 
 function validateRewrite(obj: any): void {
