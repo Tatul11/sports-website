@@ -69,19 +69,33 @@ function validate(obj: any): void {
 export async function generateRewrite(article: SourceArticle): Promise<RewrittenArticle> {
   const maxAttempts = 4;
   let lastErr: Error | undefined;
+  let fatal: Error | undefined;
 
   for (let attempt = 1; attempt <= maxAttempts; attempt++) {
     try {
+      // Sonnet 5 runs adaptive thinking when `thinking` is omitted, and those thinking
+      // tokens are billed and count against max_tokens — a plain rewrite doesn't need
+      // them, and they were starving the output budget (empty/truncated JSON). The
+      // installed SDK's types predate the `thinking` param, hence the assertion.
       const msg = await client.messages.create({
         model: config.claude.model,
-        max_tokens: 8000,
+        max_tokens: 15000,
+        thinking: { type: 'disabled' },
         system: REWRITE_SYSTEM_PROMPT,
         messages: [{ role: 'user', content: buildRewriteUserPrompt(article) }],
-      });
+      } as Anthropic.MessageCreateParamsNonStreaming);
+
+      // A response cut off by the token limit fails identically on every retry while
+      // still being billed each time, so fail fast instead of burning attempts.
+      if (msg.stop_reason === 'max_tokens') {
+        const blocks = msg.content.map((b) => b.type).join(', ') || 'none';
+        fatal = new Error(`Response hit max_tokens before finishing (content blocks: ${blocks}).`);
+        throw fatal;
+      }
 
       const textPart = msg.content.find((b) => b.type === 'text');
       if (!textPart || textPart.type !== 'text') {
-        throw new Error('Claude returned no text content.');
+        throw new Error(`Claude returned no text content (stop_reason: ${msg.stop_reason}).`);
       }
 
       const parsed = extractJson(textPart.text);
@@ -89,6 +103,7 @@ export async function generateRewrite(article: SourceArticle): Promise<Rewritten
       return parsed as RewrittenArticle;
     } catch (err) {
       lastErr = err as Error;
+      if (fatal) break;
       if (attempt < maxAttempts) {
         const delayMs = 2000 * attempt;
         console.log(`    (attempt ${attempt} failed — retrying in ${delayMs}ms: ${lastErr.message})`);
